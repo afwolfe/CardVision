@@ -27,6 +27,7 @@ extension TransactionReaderOCRText {
 fileprivate extension Array where Element == String {
     static var debug: Bool { false }
 
+    /// Removes and returns the top element from the array
     mutating func pop() -> Element? {
         guard let top = first else {
             return nil
@@ -34,6 +35,11 @@ fileprivate extension Array where Element == String {
 
         remove(at: 0)
         return top
+    }
+    
+    /// Inserts the new element at the beginning of the array
+    mutating func push(element: String) {
+        insert(element, at: 0)
     }
 
     /// Determines if the payee and memo combination constitute a Daily Cash transaction.
@@ -79,6 +85,18 @@ fileprivate extension Array where Element == String {
 
         guard var payee = pop() else {
             return nil
+        }
+        
+        // Long payee names end in ... and can cause the amount to be grouped in with the payee.
+        if payee.isMatchedBy(regex: "\\.{3}") {
+            let elipsisRange = payee.range(of: "\\.{3}", options: .regularExpression)
+            let newPayee = String(payee[..<(elipsisRange!.upperBound)])
+            
+            let potentialAmount = String(payee[elipsisRange!.upperBound...])
+            if (potentialAmount.count > 0) { // Put any remaining text back on the stack
+                push(element: potentialAmount)
+            }
+            payee = newPayee
         }
 
         // Sometimes payee names get broken into additional lines

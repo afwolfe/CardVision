@@ -70,6 +70,18 @@ final class TransactionReaderOCRTextTests: XCTestCase {
         }
     }
     
+    func testLongPayeeName() {
+        ocrText = [
+            "Transaction 1...$12.34", "Somewhere, USA", "2%", "2 hours ago",
+            "Transaction 2...", "$222.22", "Somewhere, USA", "2%", "2 hours ago",
+        ]
+        let transactions = ocrText.parseTransactions(screenshotDate: Date.current)
+        XCTAssertEqual("Transaction 1...", transactions[0].payee)
+        XCTAssertEqual(-1234, transactions[0].amountInCents)
+        XCTAssertEqual("Transaction 2...", transactions[1].payee)
+        XCTAssertEqual(-22222, transactions[1].amountInCents)
+    }
+    
     /// Helper method to make sure that the default transaction dates are correct.
     func verifyTransactionDates(transactions: [Transaction]) {
         XCTAssertEqual(Date.current.date(byAddingMinutes: -15), transactions[0].date)
@@ -84,6 +96,7 @@ final class TransactionReaderOCRTextTests: XCTestCase {
     
     static var allTests = [(
         "testTransactionText", testTransactionText,
-        "testTransactionTextFamilySharing", testTransactionTextFamilySharing
+        "testTransactionTextFamilySharing", testTransactionTextFamilySharing,
+        "testLongPayeeName", testLongPayeeName
     )]
 }
